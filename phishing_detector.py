@@ -1,107 +1,86 @@
+# Phishing URL Detector
+# Checks if a URL looks suspicious or safe
+
 import re
 import tldextract
 from urllib.parse import urlparse
 
 def detect_phishing(url):
-    """
-    Analyzes a URL for potential phishing indicators.
-    Returns a classification string with emoji indicator.
-    """
-    suspicious_keywords = [
-        'login', 'verify', 'update', 'secure', 'account', 'webscr',
-        'signin', 'wp', 'dropbox', 'bank', 'confirm', 'validate'
-    ]
-    bad_tlds = ['.tk', '.ga', '.ml', '.cf', '.gq', '.ru', '.xyz', '.top']
-    
-    # Basic URL validation
+    # Add https if missing
     if not url.startswith(('http://', 'https://')):
-        url = 'https://' + url  # Try to normalize
-    
+        url = 'https://' + url
+
+    # Validate URL
     try:
         parsed = urlparse(url)
         if not parsed.netloc:
-            return "❌ Invalid URL format"
-    except Exception:
-        return "❌ Invalid URL format"
-    
-    try:
-        extracted = tldextract.extract(url)
-    except Exception:
-        return "⚠️ Error analyzing URL (tldextract failed)"
-    
-    # Reconstruct domain properly
-    if extracted.suffix:
-        domain = f"{extracted.domain}.{extracted.suffix}"
-    else:
-        domain = extracted.domain  # Fallback if no suffix found
-    
-    subdomain = extracted.subdomain
-    score = 0
-    reasons = []
+            return "❌ Invalid URL"
+    except:
+        return "❌ Invalid URL"
 
-    # 1. Check for IP address instead of domain
-    if re.match(r'^https?://(\d{1,3}\.){3}\d{1,3}(:\d+)?(/.*)?$', url):
+    extracted = tldextract.extract(url)
+    domain    = f"{extracted.domain}.{extracted.suffix}"
+    subdomain = extracted.subdomain
+    score     = 0
+    reasons   = []
+
+    # 1. IP address used instead of domain
+    if re.match(r'^https?://(\d{1,3}\.){3}\d{1,3}', url):
         score += 2
         reasons.append("IP address used instead of domain")
-    
-    # 2. Check for excessive subdomains (potential homograph attack)
+
+    # 2. Too many subdomains
     if subdomain and subdomain.count('.') >= 2:
         score += 1
-        reasons.append("Multiple subdomains detected")
-    
-    # 3. Check for suspicious keywords in path or query (not domain to reduce false positives)
-    path_and_query = f"{parsed.path}?{parsed.query}".lower()
-    if any(keyword in path_and_query for keyword in suspicious_keywords):
+        reasons.append("Too many subdomains")
+
+    # 3. Suspicious words in URL
+    bad_words = ['login', 'verify', 'update', 'secure', 'account', 'confirm', 'bank', 'signin']
+    if any(word in url.lower() for word in bad_words):
         score += 2
-        reasons.append("Suspicious keywords in URL path/query")
-    
-    # 4. Check for known malicious TLDs
-    if extracted.suffix and any(f".{extracted.suffix}".endswith(tld) for tld in bad_tlds):
+        reasons.append("Suspicious keywords found")
+
+    # 4. Suspicious domain endings
+    bad_tlds = ['.tk', '.ga', '.ml', '.cf', '.gq', '.ru', '.xyz', '.top']
+    if any(url.lower().endswith(tld) or f".{extracted.suffix}" == tld for tld in bad_tlds):
         score += 2
-        reasons.append(f"Suspicious TLD: .{extracted.suffix}")
-    
-    # 5. Check for brand impersonation via typosquatting
-    typosquat_patterns = [
-        r'paypa[1l]', r'faceb[0o]0k', r'g[0o][0o]gle', 
-        r'micros[0o]ft', r'app[1l]e', r'amaz[0o]n', r'netf1ix'
-    ]
-    full_url_lower = url.lower()
-    if any(re.search(pattern, full_url_lower) for pattern in typosquat_patterns):
+        reasons.append(f"Suspicious domain ending: .{extracted.suffix}")
+
+    # 5. Fake brand names (typosquatting)
+    fake_brands = [r'paypa[1l]', r'faceb[0o]0k', r'g[0o][0o]gle', r'micros[0o]ft', r'amaz[0o]n']
+    if any(re.search(pattern, url.lower()) for pattern in fake_brands):
         score += 2
-        reasons.append("Possible brand impersonation (typosquatting)")
-    
-    # 6. Check for URL shorteners (often abused)
-    shortener_domains = ['bit.ly', 'tinyurl', 't.co', 'ow.ly', 'short.link']
-    if any(short in domain.lower() for short in shortener_domains):
+        reasons.append("Fake brand name detected")
+
+    # 6. URL shortener
+    shorteners = ['bit.ly', 'tinyurl', 't.co', 'ow.ly']
+    if any(s in domain for s in shorteners):
         score += 1
         reasons.append("URL shortener detected")
-    
-    # 7. Check for @ symbol (can be used to hide real destination)
+
+    # 7. @ symbol in URL
     if '@' in parsed.netloc:
         score += 2
-        reasons.append("URL contains '@' symbol (credential phishing tactic)")
-    
-    # Final classification with detailed feedback
+        reasons.append("@ symbol found in URL")
+
+    # Result
     if score >= 5:
-        return f"🚨 Likely phishing\n   Reasons: {', '.join(reasons)}"
+        return f"🚨 Likely phishing — {', '.join(reasons)}"
     elif score >= 3:
-        return f"⚠️ Suspicious\n   Reasons: {', '.join(reasons) if reasons else 'Heuristic score'}"
+        return f"⚠️  Suspicious — {', '.join(reasons)}"
     else:
         return "✅ Likely safe"
 
-# -------------------------------
-# Main execution
-# -------------------------------
+
+# --- Try it out ---
 if __name__ == "__main__":
-    print("🛡️  Phishing URL Detector")
-    print("Tip: Enter URLs like 'https://example.com/login'")
+    print("Phishing URL Detector")
     print("Type 'quit' to exit\n")
-    
+
     while True:
-        url = input("Enter URL to check: ").strip()
+        url = input("Enter URL: ").strip()
         if url.lower() in ['quit', 'exit', 'q']:
-            print("👋 Stay safe online!")
+            print("Stay safe online!")
             break
-        if not url:
-            continue
-        print("\nResult:", detect_phishing(url), "\n")
+        if url:
+            print(detect_phishing(url), "\n")
