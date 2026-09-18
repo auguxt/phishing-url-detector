@@ -24,20 +24,20 @@ phishing-url-detector/
 
 It checks the URL for suspicious signs and gives a score.
 
-| Check | What it looks for |
-|-------|------------------|
-| IP address | `http://192.168.1.1/login` |
-| Suspicious words | `login`, `verify`, `bank` |
-| Bad domain endings | `.tk`, `.ru`, `.xyz` |
-| Fake brand names | `paypa1`, `g00gle` |
-| URL shorteners | `bit.ly`, `tinyurl` |
-| @ symbol | `user@evil.com/fake` |
-| Too many subdomains | `a.b.c.evil.com` |
+| Check | What it looks for | Points |
+|-------|------------------|--------|
+| IP address | `http://192.168.1.1/login` | +2 |
+| Suspicious words | `login`, `verify`, `bank` | +2 |
+| Bad domain endings | `.tk`, `.ru`, `.xyz` | +2 |
+| Fake brand names | `paypa1`, `g00gle` (but not the real `google.com`) | +2 |
+| URL shorteners | `bit.ly`, `t.co` | +1 |
+| @ symbol | `user@evil.com/fake` | +2 |
+| Too many subdomains | `a.b.c.evil.com` | +1 |
 
 **Score result:**
 ```
-Score 5+  → 🚨 Likely phishing
-Score 3-4 → ⚠️  Suspicious
+Score 4+  → 🚨 Likely phishing
+Score 3   → ⚠️  Suspicious
 Score 0-2 → ✅ Likely safe
 ```
 
@@ -59,7 +59,7 @@ python phishing_detector.py
 
 ```
 Enter URL: https://paypa1.com/verify/account
-🚨 Likely phishing — Fake brand name, Suspicious keywords found
+🚨 Likely phishing — Suspicious keywords found, Fake brand name detected
 
 Enter URL: https://www.google.com
 ✅ Likely safe
@@ -69,13 +69,13 @@ Enter URL: https://www.google.com
 
 ## Test URLs
 
-Sample URLs are in `test_urls.txt` to try out.
+Sample URLs with their expected results are in `test_urls.txt` to try out.
 
 ---
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.8+
 - `tldextract`
 
 ---

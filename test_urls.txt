@@ -1,15 +1,13 @@
-# Safe URLs
+# ✅ Likely safe
 https://www.google.com
 https://github.com
 https://example.com
+https://bit.ly/3xYz9Qw                    # shortener alone = 1 point
+https://secure-bank-login.com/signin     # keywords alone = 2 points
 
-# Suspicious URLs
-https://secure-bank-login.com/signin
-http://192.168.1.1/login
-https://bit.ly/3xYz9Qw
-
-# Likely Phishing URLs
-https://paypa1.com/verify/account
-http://faceb00k-login.ga/wp-login.php
-https://support@apple-confirm.ru/validate
-https://sub1.sub2.sub3.evil.tk/login
+# 🚨 Likely phishing
+http://192.168.1.1/login                      # IP + keywords = 4
+https://paypa1.com/verify/account            # fake brand + keywords = 4
+http://faceb00k-login.ga/wp-login.php        # fake brand + keywords + .ga = 6
+https://support@apple-confirm.ru/validate    # @ + .ru + keywords = 6
+https://sub1.sub2.sub3.evil.tk/login         # subdomains + keywords + .tk = 5
